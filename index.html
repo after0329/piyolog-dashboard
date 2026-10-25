@@ -34,7 +34,7 @@
   #statusText { overflow-wrap:anywhere; }
   .error-banner { display:none; padding:10px 14px; border:1px solid #8f4e50; background:#3a2329; color:#ffdada; border-radius:12px; font-size:clamp(11px,1.1vw,14px); line-height:1.5; }
   .error-banner.show { display:block; }
-  .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(10px,1.5vw,22px); flex:1; align-items:stretch; }
+  .cards { display:grid; grid-template-columns:1fr 1.12fr 1fr; gap:clamp(10px,1.5vw,22px); flex:1; align-items:stretch; }
   .card { min-width:0; border:1px solid var(--line); border-radius:clamp(17px,2vw,28px); background:linear-gradient(145deg,#202f3b 0%,#17232d 100%); padding:clamp(15px,2vw,30px); display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; min-height:300px; }
   .card:nth-child(1) { border-top:3px solid var(--mint); }
   .card:nth-child(2) { border-top:3px solid var(--blue); }
@@ -44,7 +44,30 @@
   .metric { margin:auto 0; padding:20px 0 12px; }
   .metric-main { font-weight:850; letter-spacing:-.06em; line-height:1.02; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
   .elapsed { font-size:clamp(32px,5.2vw,77px); }
-  .amount { font-size:clamp(48px,7.2vw,104px); }
+  .hero-elapsed { font-size:clamp(48px,8.2vw,124px); letter-spacing:-.075em; }
+  .comparison { margin-top:8px; font-size:clamp(10px,1.05vw,14px); font-weight:750; line-height:1.35; color:var(--muted); }
+  .comparison[data-trend=up] { color:var(--mint); }
+  .comparison[data-trend=down] { color:var(--amber); }
+  .comparison[data-trend=flat] { color:var(--blue); }
+  .milk-history { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(4px,.7vw,9px); margin-top:10px; }
+  .milk-day { min-width:0; text-align:center; }
+  .milk-day-value { font-size:clamp(10px,1.25vw,16px); font-weight:800; white-space:nowrap; }
+  .milk-bar-track { height:clamp(26px,4.2vw,48px); margin:4px 0; border-radius:7px; background:#10202a; display:flex; align-items:flex-end; overflow:hidden; }
+  .milk-bar-fill { width:100%; min-height:0; background:#6596b3; border-radius:6px 6px 0 0; transition:height .25s; }
+  .milk-day.today .milk-bar-fill { background:var(--mint); }
+  .milk-day.unavailable .milk-bar-fill { background:#536570; }
+  .milk-day-label { color:var(--muted); font-size:clamp(9px,.9vw,11px); white-space:nowrap; }
+  .projection { margin-top:10px; padding-top:8px; border-top:1px solid #30424d; display:flex; gap:8px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+  .projection-label { color:var(--muted); font-size:clamp(10px,1vw,13px); }
+  .projection-value { font-size:clamp(18px,2vw,27px); font-weight:850; color:var(--blue); white-space:nowrap; }
+  .projection-note { width:100%; color:var(--muted); font-size:clamp(9px,.85vw,11px); line-height:1.35; }
+  .diaper-counts { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:7px; color:#e1ebef; font-weight:700; }
+  .amount { font-size:clamp(42px,5.6vw,76px); }
+  .amount-pair { display:grid; grid-template-columns:1fr 1fr; gap:clamp(7px,1vw,12px); align-items:stretch; margin-bottom:7px; }
+  .amount-stat { min-width:0; padding:clamp(8px,1vw,13px); border:1px solid #344a57; border-radius:13px; background:#243642; }
+  .amount-label { margin-bottom:3px; color:var(--muted); font-size:clamp(10px,1vw,13px); line-height:1.3; font-weight:750; }
+  .amount-total { font-size:clamp(31px,4vw,56px); }
+  .amount-breast { font-size:clamp(35px,4.5vw,63px); color:var(--mint); }
   .unit { font-size:.38em; letter-spacing:0; color:var(--muted); margin-left:.18em; }
   .metric-note { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,16px); line-height:1.45; }
   .card-bottom { border-top:1px solid #30424d; padding-top:13px; color:var(--muted); font-size:clamp(11px,1.15vw,15px); line-height:1.6; }
@@ -52,6 +75,7 @@
   .chip { display:inline-block; border:1px solid #415662; color:#d0dce2; border-radius:100px; padding:4px 8px; font-size:clamp(9px,.95vw,12px); white-space:nowrap; }
   .footer { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; color:var(--muted); font-size:clamp(10px,.95vw,13px); line-height:1.5; }
   .footer strong { color:#dbe6eb; font-weight:650; }
+  #historyStatus { color:#d2e0e7; }
   .footer-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
   .small-button { background:transparent; border:1px solid #3d5562; color:#d3e0e7; border-radius:10px; padding:8px 10px; font-size:12px; white-space:nowrap; }
   .overlay { position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; padding:16px; background:#050a0edb; backdrop-filter:blur(8px); }
@@ -69,7 +93,7 @@
   #toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); max-width:calc(100% - 30px); padding:10px 15px; border-radius:13px; color:#08231d; background:var(--mint); font-weight:750; font-size:13px; z-index:50; opacity:0; pointer-events:none; transition:opacity .2s; }
   #toast.show { opacity:1; }
   @media (orientation:landscape) and (min-width:760px) {
-    .app { height:100dvh; min-height:540px; overflow:hidden; }
+    .app { height:100dvh; min-height:0; overflow:hidden; }
     .cards { min-height:0; }
     .card { min-height:0; }
   }
@@ -81,6 +105,8 @@
     .card { min-height:230px; }
     .elapsed { font-size:clamp(43px,11vw,68px); }
     .amount { font-size:clamp(65px,15vw,95px); }
+    .amount-total { font-size:clamp(31px,8vw,47px); }
+    .amount-breast { font-size:clamp(35px,9vw,55px); }
     .footer { align-items:flex-start; flex-direction:column; }
   }
   @media (max-height:600px) and (orientation:landscape) {
@@ -95,8 +121,23 @@
     .symbol { width:34px; height:34px; border-radius:10px; }
     .metric { padding:10px 0; }
     .elapsed { font-size:clamp(34px,4.7vw,56px); }
-    .amount { font-size:clamp(48px,6vw,70px); }
+    .hero-elapsed { font-size:clamp(40px,4.8vw,66px); }
+    .elapsed:not(.hero-elapsed) { font-size:clamp(24px,3.6vw,38px); }
+    .amount { font-size:clamp(40px,5.2vw,62px); }
+    .milk-bar-track { height:28px; }
+    .milk-history { margin-top:6px; }
+    .projection { margin-top:4px; padding-top:4px; }
+    .projection-note { display:none; }
+    .card:nth-child(2) .metric { padding:4px 0 0; margin:0; }
+    .card:nth-child(2) .amount-total { font-size:clamp(29px,4.1vw,48px); }
+    .card:nth-child(2) .amount-breast { font-size:clamp(32px,4.5vw,53px); }
+    .metric-note#amountNote, #amountBreakdown, #amountFoot { display:none; }
+    .milk-history { margin-top:4px; }
+    .milk-bar-track { height:22px; margin:3px 0; }
+    .comparison { margin-top:4px; }
     .card-bottom { padding-top:8px; }
+    .footer #historyStatus, .footer #pollingHint { display:none; }
+    .footer { font-size:10px; }
   }
 </style>
 </head>
@@ -126,7 +167,7 @@
     <section class="card" aria-labelledby="feedingHeading">
       <div class="card-heading" id="feedingHeading"><span class="symbol">🍼</span><span>直近の授乳から</span></div>
       <div class="metric">
-        <div class="metric-main elapsed" id="feedingElapsed">--</div>
+        <div class="metric-main elapsed hero-elapsed" id="feedingElapsed">--</div>
         <div class="metric-note" id="feedingNote">ぴよログのデータフィードを設定してください</div>
       </div>
       <div class="card-bottom"><div>直近の記録時刻　<strong id="feedingAt">--:--</strong></div><div id="feedingType">授乳記録待ち</div></div>
@@ -135,27 +176,44 @@
     <section class="card" aria-labelledby="amountHeading">
       <div class="card-heading" id="amountHeading"><span class="symbol">🥛</span><span>今日の授乳量</span></div>
       <div class="metric">
-        <div class="metric-main amount"><span id="todayAmount">---</span><span class="unit">ml</span></div>
-        <div class="metric-note" id="amountNote">今日、ぴよログに記録された摂取量</div>
+        <div class="amount-pair">
+          <div class="amount-stat">
+            <div class="amount-label">総授乳量（母乳＋ミルク）</div>
+            <div class="metric-main amount amount-total"><span id="todayTotalAmount">---</span><span class="unit">ml</span></div>
+          </div>
+          <div class="amount-stat">
+            <div class="amount-label">うち母乳</div>
+            <div class="metric-main amount amount-breast"><span id="todayAmount">---</span><span class="unit">ml</span></div>
+          </div>
+        </div>
+        <div class="metric-note" id="amountNote">記録済みの量で集計。母乳量未入力の直母は合計に含まれません。</div>
+        <div class="comparison" id="milkComparison" data-trend="unknown">過去3日分の比較データを蓄積中</div>
+        <div class="milk-history" id="milkHistory" aria-label="今日と過去3日の同時刻までの母乳量"></div>
         <div class="breakdown" id="amountBreakdown"></div>
+        <div class="projection">
+          <span class="projection-label">今日の総母乳量予測</span>
+          <strong id="predictedAmount" class="projection-value">-- ml</strong>
+          <div id="predictionNote" class="projection-note">履歴を蓄積すると予測します</div>
+        </div>
       </div>
-      <div class="card-bottom" id="amountFoot">母乳量が未入力の記録は、量に含まれません。</div>
+      <div class="card-bottom" id="amountFoot">母乳量が未入力の授乳は推定しません。</div>
     </section>
 
     <section class="card" aria-labelledby="diaperHeading">
-      <div class="card-heading" id="diaperHeading"><span class="symbol">🧷</span><span>直近のおしっこ・うんちから</span></div>
+      <div class="card-heading" id="diaperHeading"><span class="symbol">🧷</span><span>直近の排泄から</span></div>
       <div class="metric">
         <div class="metric-main elapsed" id="diaperElapsed">--</div>
         <div class="metric-note" id="diaperNote">おむつ記録待ち</div>
       </div>
-      <div class="card-bottom"><div>直近の記録時刻　<strong id="diaperAt">--:--</strong></div><div id="diaperType">おしっこ・うんち</div></div>
+      <div class="card-bottom"><div>直近の記録時刻　<strong id="diaperAt">--:--</strong></div><div id="diaperType">おしっこ・うんち</div><div class="diaper-counts"><span id="todayPeeCount">今日のおしっこ --回</span><span id="todayPoopCount">今日のうんち --回</span></div></div>
     </section>
   </main>
 
   <footer class="footer">
     <div>
       <div id="lastSyncText">最終取得：--</div>
-      <div>データ取得は約65秒間隔。ぴよログ側のキャッシュにより反映が少し遅れることがあります。</div>
+      <div id="historyStatus">取得した授乳・排泄の最小限データをこのブラウザに保存します。</div>
+      <div id="pollingHint">取得は約65秒間隔。24時間以上の取得中断があると一部履歴を復元できない場合があります。</div>
     </div>
     <div class="footer-actions">
       <button id="wakeButton" class="small-button" type="button">▣ 画面ON維持</button>
@@ -167,7 +225,7 @@
 <div id="settingsOverlay" class="overlay" hidden>
   <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <h2 id="settingsTitle">接続設定</h2>
-    <p>ぴよログの「データフィード」で発行したURLを設定します。URLはパスワードと同じ扱いです。このページのコードや公開リポジトリには書かず、ダッシュボードを表示する端末のブラウザ内に保存してください。URLと、表示に必要な授乳・排泄データの最小限のキャッシュは、このブラウザ内に保存されます。公開リポジトリやGitHubへ送信する処理はありません。</p>
+    <p>ぴよログの「データフィード」で発行したURLを設定します。URLはパスワードと同じ扱いです。このページのコードや公開リポジトリには書かず、ダッシュボードを表示する端末のブラウザ内に保存してください。URLと、表示に必要な授乳・排泄データ（メモや体重などは除外）の最小限の履歴は、このブラウザ内に最大8日分保存されます。GitHubへ送信する処理はありません。</p>
     <form id="settingsForm">
       <div class="field">
         <label for="feedUrlInput">ぴよログ・データフィードURL</label>
@@ -206,7 +264,7 @@
   const $ = id => document.getElementById(id);
   const state = {
     url: getStore(STORE.url, ''),
-    records: [], generatedAt: null, lastSuccessAt: null,
+    records: [], generatedAt: null, lastSuccessAt: null, historyStartAt: null, gapDays: [],
     lastRequestAt: Number(getStore(STORE.lastRequest, '0')) || 0,
     lastError: '', inFlight: false, retryCount: 0, wakeLock: null,
     keepAwakeWanted: getStore(STORE.wake, '0') === '1',
@@ -243,6 +301,10 @@
   function fmtDate(date) {
     return new Intl.DateTimeFormat('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' }).format(date);
   }
+  function fmtDateTimeShort(value) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '--' : `${d.getMonth()+1}/${d.getDate()} ${fmtTime(d)}`;
+  }
   function elapsedText(dateValue) {
     if (!dateValue) return '記録なし';
     const dt = new Date(dateValue).getTime();
@@ -251,8 +313,8 @@
     const days = Math.floor(minutes / 1440);
     const hours = Math.floor((minutes % 1440) / 60);
     const mins = minutes % 60;
-    if (days > 0) return `${days}日 ${hours}時間`;
-    if (hours > 0) return `${hours}時間 ${mins}分`;
+    if (days > 0) return `${days}日${hours}時間`;
+    if (hours > 0) return `${hours}時間${mins}分`;
     return `${mins}分`;
   }
   function localDay(record) {
@@ -264,9 +326,11 @@
   const DISPLAY_TYPES = new Set(['BreastFeeding','Formula','ExpressedBreastMilk','Pee','Poop']);
   function sanitizeRecords(records) {
     if (!Array.isArray(records)) return [];
-    return records.filter(r => r && DISPLAY_TYPES.has(r.type) && typeof r.datetime === 'string')
+    return records.filter(r => r && DISPLAY_TYPES.has(r.type) && typeof r.datetime === 'string' && Number.isFinite(new Date(r.datetime).getTime()))
       .map(r => {
+        // Keep only dashboard-required fields. In particular, never persist memos or unrelated health/development records.
         const safe = { datetime: r.datetime, type: r.type };
+        if (typeof r.event_id === 'string' && r.event_id) safe.event_id = r.event_id;
         if (r.type === 'BreastFeeding') {
           for (const key of ['leftTime','rightTime']) {
             const n = Number(r[key]);
@@ -279,6 +343,50 @@
         }
         return safe;
       });
+  }
+  function recordKey(record) {
+    return record.event_id ? `id:${record.event_id}` : `fallback:${record.type}:${record.datetime}`;
+  }
+  function mergeFeedSnapshot(incoming, payload) {
+    const now = Date.now();
+    const cutoff = now - 8 * 86400000;
+    const generated = Date.parse(payload.generated_at || '') || now;
+    const from = Date.parse(payload.range && payload.range.from || '') || (generated - 24*3600000);
+    const to = Date.parse(payload.range && payload.range.to || '') || generated;
+    const fresh = sanitizeRecords(incoming);
+    const freshKeys = new Set(fresh.map(recordKey));
+    const freshFallbacks = new Set(fresh.map(r => `${r.type}:${r.datetime}`));
+    const merged = new Map();
+    for (const record of state.records) {
+      const time = recordTime(record);
+      if (!Number.isFinite(time) || time < cutoff) continue;
+      // The feed is a complete snapshot of its reported range. A missing in-range item may have been deleted/edited;
+      // items outside that range must be retained locally because the free feed no longer returns them.
+      if (time >= from && time < to) {
+        if (!freshKeys.has(recordKey(record)) && !freshFallbacks.has(`${record.type}:${record.datetime}`)) continue;
+      }
+      merged.set(recordKey(record), record);
+    }
+    for (const record of fresh) {
+      const time = recordTime(record);
+      if (time >= cutoff) merged.set(recordKey(record), record);
+    }
+    // Deduplicate legacy entries without event_id against current API records with event_id.
+    const arr = [...merged.values()];
+    const canonical = new Set(arr.filter(r => r.event_id).map(r => `${r.type}:${r.datetime}`));
+    return arr.filter(r => r.event_id || !canonical.has(`${r.type}:${r.datetime}`)).sort((a,b) => recordTime(a)-recordTime(b));
+  }
+  function markGapDays(startMs, endMs) {
+    if (!(endMs > startMs)) return;
+    const days = new Set(state.gapDays || []);
+    let cursor = new Date(startMs); cursor.setHours(0,0,0,0);
+    const end = new Date(endMs);
+    while (cursor.getTime() <= end.getTime()) {
+      days.add(localDateKey(cursor)); cursor.setDate(cursor.getDate()+1);
+    }
+    state.gapDays = [...days].filter(key => {
+      const d = parseDateKey(key); return d && d.getTime() >= Date.now() - 8*86400000;
+    });
   }
   function amountOf(record) {
     const value = record && record.value && Number(record.value.value);
@@ -313,8 +421,122 @@
     renderMetrics();
     renderExpiry();
   }
+  function startOfLocalDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime(); }
+  function dayKeyOffset(offset, fromDate = new Date()) {
+    const d = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() - offset, 12, 0, 0, 0);
+    return localDateKey(d);
+  }
+  function isDayCovered(dayKey) {
+    const day = parseDateKey(dayKey);
+    const first = state.historyStartAt ? new Date(state.historyStartAt).getTime() : NaN;
+    return !!day && Number.isFinite(first) && first <= startOfLocalDay(day) && !(state.gapDays || []).includes(dayKey);
+  }
+  function sumMilk(records) {
+    return records.filter(r => r.type === 'BreastFeeding' || r.type === 'ExpressedBreastMilk').reduce((sum,r) => sum + amountOf(r), 0);
+  }
+  function totalIntakeAmountAt(dayKey, cutoffMs = Infinity) {
+    const intakeTypes = new Set(['BreastFeeding','Formula','ExpressedBreastMilk']);
+    return state.records
+      .filter(r => intakeTypes.has(r.type) && localDateKey(new Date(r.datetime)) === dayKey && recordTime(r) <= cutoffMs)
+      .reduce((sum,r) => sum + amountOf(r), 0);
+  }
+  function milkAmountAt(dayKey, cutoffMs = Infinity) {
+    return state.records.filter(r => (r.type === 'BreastFeeding' || r.type === 'ExpressedBreastMilk') && localDateKey(new Date(r.datetime)) === dayKey && recordTime(r) <= cutoffMs).reduce((sum,r) => sum + amountOf(r), 0);
+  }
+  function sameClockCutoff(dayKey, currentDate) {
+    const day = parseDateKey(dayKey);
+    if (!day) return 0;
+    return new Date(day.getFullYear(), day.getMonth(), day.getDate(), currentDate.getHours(), currentDate.getMinutes(), currentDate.getSeconds(), currentDate.getMilliseconds()).getTime();
+  }
+  function fmtShortDate(key) {
+    const d = parseDateKey(key);
+    return d ? `${d.getMonth()+1}/${d.getDate()}` : key;
+  }
+  function renderMilkHistory(now) {
+    const nowMs = now.getTime();
+    const todayKey = localDateKey(now);
+    const comparison = [];
+    for (let offset = 1; offset <= 3; offset++) {
+      const key = dayKeyOffset(offset, now);
+      if (isDayCovered(key)) comparison.push({ key, value: milkAmountAt(key, sameClockCutoff(key, now)), covered:true });
+      else comparison.push({ key, value:null, covered:false });
+    }
+    const todayMilk = milkAmountAt(todayKey, nowMs);
+    const todayTotal = totalIntakeAmountAt(todayKey, nowMs);
+    const validComparison = comparison.filter(d => d.covered && d.value !== null);
+    const avg = validComparison.length ? validComparison.reduce((sum,d)=>sum+d.value,0) / validComparison.length : null;
+    const comparisonEl = $('milkComparison');
+    const todayHasGap = (state.gapDays || []).includes(todayKey);
+    if (todayHasGap) {
+      comparisonEl.dataset.trend = 'unknown';
+      comparisonEl.textContent = '今日に取得中断あり · 母乳量が不足している可能性';
+    } else if (avg === null) {
+      comparisonEl.dataset.trend = 'unknown';
+      comparisonEl.textContent = `過去3日同時刻：比較可能な日 ${validComparison.length}/3日 · 履歴を蓄積中`;
+    } else {
+      const diff = todayMilk - avg;
+      const pct = avg > 0 ? Math.round(diff / avg * 100) : (todayMilk > 0 ? 100 : 0);
+      comparisonEl.dataset.trend = pct >= 10 ? 'up' : pct <= -10 ? 'down' : 'flat';
+      const sign = diff > 0 ? '+' : diff < 0 ? '−' : '±';
+      comparisonEl.textContent = `過去${validComparison.length}日同時刻平均 ${Math.round(avg)}ml · 平均比 ${sign}${Math.abs(pct)}%`;
+    }
+    const days = [{ key:todayKey, value:todayMilk, covered:true, today:true }, ...comparison.map(d=>({...d, today:false}))];
+    const displayable = days.filter(d => d.value !== null && d.value !== undefined);
+    const max = Math.max(1, ...displayable.map(d=>d.value));
+    const root = $('milkHistory'); root.innerHTML = '';
+    days.forEach(d => {
+      const item = document.createElement('div');
+      item.className = 'milk-day' + (d.today ? ' today' : '') + (!d.covered ? ' unavailable' : '');
+      const value = document.createElement('div'); value.className = 'milk-day-value';
+      value.textContent = d.value === null || d.value === undefined ? '--' : `${Math.round(d.value)}`;
+      const track = document.createElement('div'); track.className = 'milk-bar-track';
+      const fill = document.createElement('div'); fill.className='milk-bar-fill';
+      fill.style.height = d.value === null || d.value === undefined ? '0%' : `${Math.max(d.value > 0 ? 7 : 0, d.value/max*100)}%`;
+      track.appendChild(fill);
+      const label = document.createElement('div'); label.className='milk-day-label';
+      label.textContent = d.today ? '今日' : fmtShortDate(d.key);
+      item.append(value,track,label); root.appendChild(item);
+    });
+    $('predictedAmount').textContent = '-- ml';
+    $('predictionNote').textContent = '予測には過去の終日データが必要です';
+    // Forecast with median of prior complete days: today's amount / each day's same-time fraction of its full-day total.
+    const candidates = [];
+    if (!todayHasGap) comparison.forEach(d => {
+      if (!d.covered || d.value === null) return;
+      const dayRecords = state.records.filter(r => localDateKey(new Date(r.datetime)) === d.key && (r.type === 'BreastFeeding' || r.type === 'ExpressedBreastMilk'));
+      const total = sumMilk(dayRecords);
+      const fraction = total > 0 ? d.value / total : 0;
+      if (total > 0 && fraction >= 0.05 && fraction <= 1.25) candidates.push(todayMilk / fraction);
+    });
+    if (todayHasGap) {
+      $('predictionNote').textContent = '今日に取得中断があるため予測を表示しません';
+    } else if (candidates.length) {
+      candidates.sort((a,b)=>a-b);
+      const mid = Math.floor(candidates.length/2);
+      const estimate = candidates.length % 2 ? candidates[mid] : (candidates[mid-1] + candidates[mid]) / 2;
+      $('predictedAmount').textContent = `${Math.round(estimate)} ml`;
+      $('predictionNote').textContent = `過去${candidates.length}日の同時刻進捗率の中央値から算出 · あくまで記録傾向による概算`;
+    }
+    $('amountBreakdown').innerHTML = '';
+    const todayIntakeRecords = state.records.filter(r => localDateKey(new Date(r.datetime)) === todayKey && ['BreastFeeding','Formula','ExpressedBreastMilk'].includes(r.type));
+    const direct = todayIntakeRecords.filter(r=>r.type==='BreastFeeding').reduce((sum,r)=>sum+amountOf(r),0);
+    const expressed = todayIntakeRecords.filter(r=>r.type==='ExpressedBreastMilk').reduce((sum,r)=>sum+amountOf(r),0);
+    const formula = todayIntakeRecords.filter(r=>r.type==='Formula').reduce((sum,r)=>sum+amountOf(r),0);
+    [[`直母量 ${Math.round(direct)}ml`],[`搾母乳 ${Math.round(expressed)}ml`],[`ミルク ${Math.round(formula)}ml`]].forEach(([label])=>{
+      const chip=document.createElement('span'); chip.className='chip'; chip.textContent=label; $('amountBreakdown').appendChild(chip);
+    });
+    $('todayTotalAmount').textContent = String(Math.round(todayTotal));
+    $('todayAmount').textContent = String(Math.round(todayMilk));
+    $('amountNote').textContent = '記録済みの量で集計。総授乳量＝母乳＋ミルク。母乳量未入力の直母は加算されません。';
+    const noAmount = todayIntakeRecords.filter(r=>amountOf(r)===0).length;
+    $('amountFoot').textContent = noAmount ? `量が未入力または0の授乳記録 ${noAmount}件は合計に含めていません。総授乳量は実際より少なく表示される場合があります。` : '総授乳量＝記録済みの直母量＋搾母乳＋ミルク。比較グラフ・予測は母乳量のみです。';
+    const coveredDays = [0,1,2,3].filter(offset => offset === 0 || isDayCovered(dayKeyOffset(offset, now))).length;
+    $('historyStatus').textContent = `この端末に履歴を保存中 · 過去3日比較可能 ${validComparison.length}/3日 · 起点 ${state.historyStartAt ? fmtDateTimeShort(state.historyStartAt) : '接続後'}`;
+  }
   function renderMetrics() {
     const all = state.records;
+    const now = new Date();
+    const todayKey = localDateKey(now);
     const lastFeed = latestBy(all, ['BreastFeeding','Formula','ExpressedBreastMilk']);
     const lastDiaper = latestBy(all, ['Pee','Poop']);
     if (lastFeed) {
@@ -323,14 +545,14 @@
       $('feedingAt').textContent = fmtTime(lastFeed.datetime);
       const parts = [];
       if (lastFeed.type === 'BreastFeeding') {
-        const mins = (Number(lastFeed.leftTime)||0) + (Number(lastFeed.rightTime)||0);
-        if (mins > 0) parts.push(`授乳時間 ${Math.round(mins/60)}分`);
+        const secs = (Number(lastFeed.leftTime)||0) + (Number(lastFeed.rightTime)||0);
+        if (secs > 0) parts.push(`授乳時間 ${Math.round(secs/60)}分`);
         if (amountOf(lastFeed) > 0) parts.push(`${amountOf(lastFeed)}ml 記録`);
       } else if (amountOf(lastFeed) > 0) parts.push(`${amountOf(lastFeed)}ml`);
       $('feedingType').textContent = [typeLabel(lastFeed.type), ...parts].join(' · ');
     } else {
       $('feedingElapsed').textContent = '記録なし';
-      $('feedingNote').textContent = '過去24時間のフィードに授乳記録がありません';
+      $('feedingNote').textContent = '保存済み履歴に授乳記録がありません';
       $('feedingAt').textContent = '--:--';
       $('feedingType').textContent = '授乳記録待ち';
     }
@@ -341,28 +563,17 @@
       $('diaperType').textContent = typeLabel(lastDiaper.type);
     } else {
       $('diaperElapsed').textContent = '記録なし';
-      $('diaperNote').textContent = '過去24時間のフィードに排泄記録がありません';
+      $('diaperNote').textContent = '保存済み履歴に排泄記録がありません';
       $('diaperAt').textContent = '--:--';
       $('diaperType').textContent = 'おしっこ・うんち';
     }
-    const today = all.filter(localDay);
-    const formula = today.filter(r => r.type === 'Formula').reduce((s,r)=>s+amountOf(r),0);
-    const breast = today.filter(r => r.type === 'BreastFeeding').reduce((s,r)=>s+amountOf(r),0);
-    const expressed = today.filter(r => r.type === 'ExpressedBreastMilk').reduce((s,r)=>s+amountOf(r),0);
-    const total = formula + breast + expressed;
-    const breastNoAmount = today.filter(r => r.type === 'BreastFeeding' && amountOf(r) === 0).length;
-    $('todayAmount').textContent = String(Math.round(total));
-    $('amountNote').textContent = `今日の記録済み摂取量 · ${today.filter(r => ['Formula','BreastFeeding','ExpressedBreastMilk'].includes(r.type)).length}回の授乳記録`;
-    $('amountBreakdown').innerHTML = '';
-    [ [`ミルク ${Math.round(formula)}ml`], [`母乳 ${Math.round(breast)}ml`], [`搾母乳 ${Math.round(expressed)}ml`] ].forEach(([label]) => {
-      const chip = document.createElement('span'); chip.className='chip'; chip.textContent=label; $('amountBreakdown').appendChild(chip);
-    });
-    $('amountFoot').textContent = breastNoAmount > 0
-      ? `母乳の量が未入力の授乳：${breastNoAmount}回（授乳時間からは推定していません）`
-      : '母乳量が未入力の記録は、量に含まれません。';
+    const today = all.filter(r => localDateKey(new Date(r.datetime)) === todayKey);
+    $('todayPeeCount').textContent = `今日のおしっこ ${today.filter(r=>r.type==='Pee').length}回`;
+    $('todayPoopCount').textContent = `今日のうんち ${today.filter(r=>r.type==='Poop').length}回`;
+    renderMilkHistory(now);
     if (!state.url) {
       $('feedingNote').textContent = '設定からデータフィードURLを登録してください';
-      $('amountNote').textContent = '接続後、今日の記録済み摂取量を表示します';
+      $('amountNote').textContent = '接続後、母乳量と過去3日比較を表示します';
       $('diaperNote').textContent = '設定からデータフィードURLを登録してください';
     }
   }
@@ -405,15 +616,23 @@
       if (cached && Array.isArray(cached.records) && cached.schema_version === 1) {
         state.records = sanitizeRecords(cached.records);
         state.generatedAt = cached.generated_at || null;
-        state.lastSuccessAt = cached.dashboardSavedAt || null;
-        // Migrate older caches to the minimal record set; remove unrelated details and memos.
-        setStore(STORE.cache, JSON.stringify({ schema_version: 1, records: state.records, generated_at: state.generatedAt, dashboardSavedAt: state.lastSuccessAt }));
+        state.lastSuccessAt = cached.lastSuccessAt || cached.dashboardSavedAt || null;
+        state.historyStartAt = cached.historyStartAt || null;
+        state.gapDays = Array.isArray(cached.gapDays) ? cached.gapDays : [];
+        // A legacy cache only contained the last feed response; do not pretend it is a multi-day archive.
       }
     } catch (_) { /* ignore malformed local cache */ }
   }
   function storeCache(payload) {
-    const toStore = { schema_version:payload.schema_version, records:sanitizeRecords(payload.records), generated_at:payload.generated_at, dashboardSavedAt:new Date().toISOString() };
-    if (!setStore(STORE.cache, JSON.stringify(toStore))) toast('ブラウザ保存領域にアクセスできません。ページのURLや保存設定を確認してください。');
+    const toStore = {
+      schema_version: 1,
+      records: sanitizeRecords(state.records),
+      generated_at: state.generatedAt,
+      lastSuccessAt: state.lastSuccessAt,
+      historyStartAt: state.historyStartAt,
+      gapDays: state.gapDays
+    };
+    if (!setStore(STORE.cache, JSON.stringify(toStore))) toast('ブラウザ保存領域にアクセスできません。端末の空き容量やChromeの保存設定を確認してください。');
   }
   function scheduleFetch(delay) {
     clearTimeout(nextFetchTimer);
@@ -444,13 +663,25 @@
       const payload = await response.json();
       if (payload.schema_version !== 1 || !Array.isArray(payload.records)) throw new Error('unsupported_schema');
       if (!payload.records.every(r => r && typeof r.datetime === 'string' && typeof r.type === 'string')) throw new Error('invalid_payload');
-      state.records = sanitizeRecords(payload.records);
+      const nowMs = Date.now();
+      const previousSuccessMs = state.lastSuccessAt ? Date.parse(state.lastSuccessAt) : NaN;
+      if (Number.isFinite(previousSuccessMs) && nowMs - previousSuccessMs > 24*3600000) {
+        // Since the API returns only the rolling last 24h, anything between the last poll and now-24h is unrecoverable.
+        markGapDays(previousSuccessMs, nowMs - 24*3600000);
+      }
+      const apiRangeStart = Date.parse(payload.range && payload.range.from || '') || (Date.parse(payload.generated_at || '') - 24*3600000) || (nowMs - 24*3600000);
+      if (!state.historyStartAt || !Number.isFinite(Date.parse(state.historyStartAt))) state.historyStartAt = new Date(apiRangeStart).toISOString();
+      state.records = mergeFeedSnapshot(payload.records, payload);
       state.generatedAt = payload.generated_at || null;
-      state.lastSuccessAt = new Date().toISOString();
+      state.lastSuccessAt = new Date(nowMs).toISOString();
       state.lastError = '';
       state.retryCount = 0;
       storeCache(payload);
       showError('');
+      if (state.gapDays.length) {
+        const recentGap = state.gapDays.filter(key => { const d=parseDateKey(key); return d && d.getTime() >= Date.now()-4*86400000; });
+        if (recentGap.length) showError('取得が24時間以上中断した期間があります。ぴよログの無料フィードでは中断中の記録を後から取得できないため、該当日の比較・予測は不正確になる可能性があります。');
+      }
       render();
     } catch (error) {
       state.lastError = error && error.message || 'unknown';
@@ -511,7 +742,7 @@
   });
   $('forgetButton').addEventListener('click', () => {
     if (!confirm('接続URLと保存済みデータをこのブラウザから削除しますか？')) return;
-    state.url = ''; state.records = []; state.generatedAt = null; state.lastSuccessAt = null; state.lastError = '';
+    state.url = ''; state.records = []; state.generatedAt = null; state.lastSuccessAt = null; state.historyStartAt = null; state.gapDays = []; state.lastError = '';
     state.feedCreatedDate = localDateKey(new Date());
     Object.values(STORE).forEach(removeStore);
     clearTimeout(nextFetchTimer);
