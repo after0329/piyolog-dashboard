@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101820">
+<title>ぴよログ・ダッシュボード</title>
+<style>
+  :root { color-scheme: dark; --bg:#101820; --panel:#1a2631; --panel2:#202f3b; --line:#314450; --text:#f3f7f9; --muted:#a9bac5; --mint:#87e0c1; --blue:#92cfff; --amber:#ffd18a; --red:#ff9393; }
+  * { box-sizing:border-box; }
+  html, body { width:100%; height:100%; margin:0; }
+  body { background:radial-gradient(ellipse at 10% 0%, #1b303c 0%, var(--bg) 55%); color:var(--text); font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif; overflow:auto; }
+  button,input { font:inherit; }
+  button { cursor:pointer; }
+  .app { min-height:100%; display:flex; flex-direction:column; padding:clamp(12px,2.2vw,30px); gap:clamp(10px,1.4vw,20px); }
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:14px; min-height:52px; }
+  .brand { display:flex; flex-direction:column; gap:2px; }
+  .brand-kicker { font-size:clamp(10px,1vw,14px); letter-spacing:.22em; color:var(--mint); font-weight:800; }
+  .brand h1 { margin:0; font-size:clamp(19px,2.2vw,32px); letter-spacing:.02em; }
+  .top-right { display:flex; align-items:center; justify-content:flex-end; gap:clamp(8px,1.4vw,20px); }
+  .clock { text-align:right; font-variant-numeric:tabular-nums; }
+  #currentTime { font-size:clamp(24px,4vw,56px); line-height:1; font-weight:800; letter-spacing:-.04em; }
+  #currentDate { color:var(--muted); font-size:clamp(10px,1.1vw,15px); margin-top:5px; }
+  .button { border:1px solid #47606f; background:#223642; color:var(--text); border-radius:13px; padding:10px 13px; font-weight:700; font-size:clamp(11px,1vw,14px); }
+  .button:active { transform:translateY(1px); }
+  .button.primary { background:var(--mint); color:#09251e; border-color:var(--mint); }
+  .button.subtle { background:transparent; }
+  .status-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:clamp(10px,1vw,13px); }
+  .status-left { display:flex; align-items:center; gap:8px; min-width:0; }
+  .status-dot { width:9px; height:9px; flex:0 0 9px; border-radius:50%; background:#6c7b85; }
+  .status-dot.ok { background:var(--mint); box-shadow:0 0 10px #87e0c155; }
+  .status-dot.warn { background:var(--amber); }
+  .status-dot.error { background:var(--red); }
+  #statusText { overflow-wrap:anywhere; }
+  .error-banner { display:none; padding:10px 14px; border:1px solid #8f4e50; background:#3a2329; color:#ffdada; border-radius:12px; font-size:clamp(11px,1.1vw,14px); line-height:1.5; }
+  .error-banner.show { display:block; }
+  .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(10px,1.5vw,22px); flex:1; align-items:stretch; }
+  .card { min-width:0; border:1px solid var(--line); border-radius:clamp(17px,2vw,28px); background:linear-gradient(145deg,#202f3b 0%,#17232d 100%); padding:clamp(15px,2vw,30px); display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; min-height:300px; }
+  .card:nth-child(1) { border-top:3px solid var(--mint); }
+  .card:nth-child(2) { border-top:3px solid var(--blue); }
+  .card:nth-child(3) { border-top:3px solid var(--amber); }
+  .card-heading { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:clamp(13px,1.6vw,21px); font-weight:750; }
+  .symbol { display:grid; place-items:center; width:clamp(34px,4vw,54px); height:clamp(34px,4vw,54px); flex:0 0 auto; border-radius:15px; background:#30434e; font-size:clamp(18px,2vw,27px); }
+  .metric { margin:auto 0; padding:20px 0 12px; }
+  .metric-main { font-weight:850; letter-spacing:-.06em; line-height:1.02; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .elapsed { font-size:clamp(32px,5.2vw,77px); }
+  .amount { font-size:clamp(48px,7.2vw,104px); }
+  .unit { font-size:.38em; letter-spacing:0; color:var(--muted); margin-left:.18em; }
+  .metric-note { margin-top:12px; color:var(--muted); font-size:clamp(11px,1.2vw,16px); line-height:1.45; }
+  .card-bottom { border-top:1px solid #30424d; padding-top:13px; color:var(--muted); font-size:clamp(11px,1.15vw,15px); line-height:1.6; }
+  .breakdown { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip { display:inline-block; border:1px solid #415662; color:#d0dce2; border-radius:100px; padding:4px 8px; font-size:clamp(9px,.95vw,12px); white-space:nowrap; }
+  .footer { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; color:var(--muted); font-size:clamp(10px,.95vw,13px); line-height:1.5; }
+  .footer strong { color:#dbe6eb; font-weight:650; }
+  .footer-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .small-button { background:transparent; border:1px solid #3d5562; color:#d3e0e7; border-radius:10px; padding:8px 10px; font-size:12px; white-space:nowrap; }
+  .overlay { position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; padding:16px; background:#050a0edb; backdrop-filter:blur(8px); }
+  .overlay[hidden] { display:none; }
+  .dialog { width:min(560px,100%); max-height:92vh; overflow:auto; border:1px solid #40545f; border-radius:22px; background:#17242e; padding:clamp(18px,3vw,28px); box-shadow:0 25px 80px #0008; }
+  .dialog h2 { margin:0 0 7px; font-size:23px; }
+  .dialog p { color:var(--muted); font-size:13px; line-height:1.65; }
+  .field { margin:17px 0; }
+  .field label { display:block; margin-bottom:7px; font-size:13px; font-weight:750; }
+  .field input { width:100%; border:1px solid #536b78; background:#0e1920; color:var(--text); border-radius:11px; padding:12px; outline:none; }
+  .field input:focus { border-color:var(--mint); box-shadow:0 0 0 3px #87e0c122; }
+  .hint { font-size:11px !important; margin:6px 0 0; }
+  .dialog-actions { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:20px; }
+  .right-actions { display:flex; gap:8px; margin-left:auto; }
+  #toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); max-width:calc(100% - 30px); padding:10px 15px; border-radius:13px; color:#08231d; background:var(--mint); font-weight:750; font-size:13px; z-index:50; opacity:0; pointer-events:none; transition:opacity .2s; }
+  #toast.show { opacity:1; }
+  @media (orientation:landscape) and (min-width:760px) {
+    .app { height:100dvh; min-height:540px; overflow:hidden; }
+    .cards { min-height:0; }
+    .card { min-height:0; }
+  }
+  @media (max-width:760px), (orientation:portrait) {
+    .app { padding:14px; gap:12px; }
+    .topbar { align-items:flex-start; }
+    .top-right { flex-direction:column-reverse; align-items:flex-end; gap:8px; }
+    .cards { grid-template-columns:1fr; }
+    .card { min-height:230px; }
+    .elapsed { font-size:clamp(43px,11vw,68px); }
+    .amount { font-size:clamp(65px,15vw,95px); }
+    .footer { align-items:flex-start; flex-direction:column; }
+  }
+  @media (max-height:600px) and (orientation:landscape) {
+    .app { padding:10px 16px; gap:8px; min-height:0; }
+    .cards { min-height:0; }
+    .card { min-height:0; }
+    .topbar { min-height:38px; }
+    .brand h1 { font-size:20px; }
+    #currentTime { font-size:32px; }
+    .card { padding:14px 18px; border-radius:17px; }
+    .card-heading { font-size:14px; }
+    .symbol { width:34px; height:34px; border-radius:10px; }
+    .metric { padding:10px 0; }
+    .elapsed { font-size:clamp(34px,4.7vw,56px); }
+    .amount { font-size:clamp(48px,6vw,70px); }
+    .card-bottom { padding-top:8px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-kicker">BABY CARE · LIVE BOARD</div>
+      <h1>ぴよログ ダッシュボード</h1>
+    </div>
+    <div class="top-right">
+      <button class="button subtle" id="settingsButton" type="button">⚙ 設定</button>
+      <div class="clock" aria-label="現在時刻">
+        <div id="currentTime">--:--</div>
+        <div id="currentDate">----年--月--日（-）</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="status-row">
+    <div class="status-left"><span id="statusDot" class="status-dot"></span><span id="statusText">データフィード未設定</span></div>
+    <div id="expiryText">無料フィード：作成から90日で期限切れ</div>
+  </div>
+  <div id="errorBanner" class="error-banner" role="status"></div>
+
+  <main class="cards">
+    <section class="card" aria-labelledby="feedingHeading">
+      <div class="card-heading" id="feedingHeading"><span class="symbol">🍼</span><span>直近の授乳から</span></div>
+      <div class="metric">
+        <div class="metric-main elapsed" id="feedingElapsed">--</div>
+        <div class="metric-note" id="feedingNote">ぴよログのデータフィードを設定してください</div>
+      </div>
+      <div class="card-bottom"><div>直近の記録時刻　<strong id="feedingAt">--:--</strong></div><div id="feedingType">授乳記録待ち</div></div>
+    </section>
+
+    <section class="card" aria-labelledby="amountHeading">
+      <div class="card-heading" id="amountHeading"><span class="symbol">🥛</span><span>今日の授乳量</span></div>
+      <div class="metric">
+        <div class="metric-main amount"><span id="todayAmount">---</span><span class="unit">ml</span></div>
+        <div class="metric-note" id="amountNote">今日、ぴよログに記録された摂取量</div>
+        <div class="breakdown" id="amountBreakdown"></div>
+      </div>
+      <div class="card-bottom" id="amountFoot">母乳量が未入力の記録は、量に含まれません。</div>
+    </section>
+
+    <section class="card" aria-labelledby="diaperHeading">
+      <div class="card-heading" id="diaperHeading"><span class="symbol">🧷</span><span>直近のおしっこ・うんちから</span></div>
+      <div class="metric">
+        <div class="metric-main elapsed" id="diaperElapsed">--</div>
+        <div class="metric-note" id="diaperNote">おむつ記録待ち</div>
+      </div>
+      <div class="card-bottom"><div>直近の記録時刻　<strong id="diaperAt">--:--</strong></div><div id="diaperType">おしっこ・うんち</div></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <div id="lastSyncText">最終取得：--</div>
+      <div>データ取得は約65秒間隔。ぴよログ側のキャッシュにより反映が少し遅れることがあります。</div>
+    </div>
+    <div class="footer-actions">
+      <button id="wakeButton" class="small-button" type="button">▣ 画面ON維持</button>
+      <button id="refreshButton" class="small-button" type="button">↻ 更新</button>
+    </div>
+  </footer>
+</div>
+
+<div id="settingsOverlay" class="overlay" hidden>
+  <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 id="settingsTitle">接続設定</h2>
+    <p>ぴよログの「データフィード」で発行したURLを設定します。URLはパスワードと同じ扱いです。このページのコードや公開リポジトリには書かず、ダッシュボードを表示する端末のブラウザ内に保存してください。URLと、表示に必要な授乳・排泄データの最小限のキャッシュは、このブラウザ内に保存されます。公開リポジトリやGitHubへ送信する処理はありません。</p>
+    <form id="settingsForm">
+      <div class="field">
+        <label for="feedUrlInput">ぴよログ・データフィードURL</label>
+        <input id="feedUrlInput" type="password" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://feed.piyolog.com/v1/feed/...">
+        <p class="hint">URLを変更しない場合は空欄のままで保存できます。接続先はこの端末のブラウザからぴよログへ直接アクセスします。</p>
+      </div>
+      <div class="field">
+        <label for="createdDateInput">フィードを作成した日（無料版は90日で期限切れ）</label>
+        <input id="createdDateInput" type="date" required>
+        <p class="hint">期限切れの14日前から画面に注意を表示します。URLを再発行したら、URLと作成日を更新してください。</p>
+      </div>
+      <div class="dialog-actions">
+        <button class="button subtle" id="forgetButton" type="button">接続情報を削除</button>
+        <div class="right-actions">
+          <button class="button" id="cancelSettings" type="button">閉じる</button>
+          <button class="button primary" type="submit">保存して接続</button>
+        </div>
+      </div>
+    </form>
+  </section>
+</div>
+<div id="toast" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+  const STORE = {
+    url: 'piyologDashboard.feedUrl.v1',
+    cache: 'piyologDashboard.lastData.v1',
+    lastRequest: 'piyologDashboard.lastRequestAt.v1',
+    createdDate: 'piyologDashboard.feedCreatedDate.v1',
+    wake: 'piyologDashboard.keepAwake.v1'
+  };
+  const MIN_REQUEST_GAP = 60000;
+  const AUTO_REFRESH_MS = 65000;
+  const $ = id => document.getElementById(id);
+  const state = {
+    url: getStore(STORE.url, ''),
+    records: [], generatedAt: null, lastSuccessAt: null,
+    lastRequestAt: Number(getStore(STORE.lastRequest, '0')) || 0,
+    lastError: '', inFlight: false, retryCount: 0, wakeLock: null,
+    keepAwakeWanted: getStore(STORE.wake, '0') === '1',
+    feedCreatedDate: getStore(STORE.createdDate, localDateKey(new Date()))
+  };
+  let nextFetchTimer = null;
+  let toastTimer = null;
+
+  function getStore(key, fallback) {
+    try { const value = localStorage.getItem(key); return value === null ? fallback : value; }
+    catch (_) { return fallback; }
+  }
+  function setStore(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch (_) { return false; }
+  }
+  function removeStore(key) { try { localStorage.removeItem(key); } catch (_) {} }
+  function localDateKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  }
+  function parseDateKey(key) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key || '')) return null;
+    const [y,m,d] = key.split('-').map(Number);
+    const dt = new Date(y,m-1,d,12,0,0,0);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  function escapeText(text) { return String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmtTime(dateValue) {
+    if (!dateValue) return '--:--';
+    const d = new Date(dateValue);
+    if (Number.isNaN(d.getTime())) return '--:--';
+    return new Intl.DateTimeFormat('ja-JP', { hour:'2-digit', minute:'2-digit', hour12:false }).format(d);
+  }
+  function fmtDate(date) {
+    return new Intl.DateTimeFormat('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' }).format(date);
+  }
+  function elapsedText(dateValue) {
+    if (!dateValue) return '記録なし';
+    const dt = new Date(dateValue).getTime();
+    if (!Number.isFinite(dt)) return '記録なし';
+    const minutes = Math.max(0, Math.floor((Date.now() - dt) / 60000));
+    const days = Math.floor(minutes / 1440);
+    const hours = Math.floor((minutes % 1440) / 60);
+    const mins = minutes % 60;
+    if (days > 0) return `${days}日 ${hours}時間`;
+    if (hours > 0) return `${hours}時間 ${mins}分`;
+    return `${mins}分`;
+  }
+  function localDay(record) {
+    const d = new Date(record.datetime);
+    return !Number.isNaN(d.getTime()) && localDateKey(d) === localDateKey(new Date());
+  }
+  function recordTime(record) { return new Date(record.datetime).getTime(); }
+  function sortNewest(records) { return [...records].sort((a,b) => recordTime(b)-recordTime(a)); }
+  const DISPLAY_TYPES = new Set(['BreastFeeding','Formula','ExpressedBreastMilk','Pee','Poop']);
+  function sanitizeRecords(records) {
+    if (!Array.isArray(records)) return [];
+    return records.filter(r => r && DISPLAY_TYPES.has(r.type) && typeof r.datetime === 'string')
+      .map(r => {
+        const safe = { datetime: r.datetime, type: r.type };
+        if (r.type === 'BreastFeeding') {
+          for (const key of ['leftTime','rightTime']) {
+            const n = Number(r[key]);
+            if (Number.isFinite(n) && n > 0) safe[key] = n;
+          }
+        }
+        if (['BreastFeeding','Formula','ExpressedBreastMilk'].includes(r.type) && r.value && r.value.unit === 'ml') {
+          const n = Number(r.value.value);
+          if (Number.isFinite(n) && n > 0) safe.value = { value: n, unit: 'ml' };
+        }
+        return safe;
+      });
+  }
+  function amountOf(record) {
+    const value = record && record.value && Number(record.value.value);
+    return Number.isFinite(value) && value > 0 && record.value.unit === 'ml' ? value : 0;
+  }
+  function typeLabel(type) {
+    return ({ BreastFeeding:'母乳', Formula:'ミルク', ExpressedBreastMilk:'搾母乳', Pee:'おしっこ', Poop:'うんち' })[type] || '記録';
+  }
+  function latestBy(records, types) {
+    return sortNewest(records.filter(r => types.includes(r.type)))[0] || null;
+  }
+  function setStatus(kind, message) {
+    $('statusDot').className = 'status-dot' + (kind ? ' ' + kind : '');
+    $('statusText').textContent = message;
+  }
+  function showError(message) {
+    const box = $('errorBanner');
+    if (!message) { box.classList.remove('show'); box.textContent = ''; return; }
+    box.textContent = message;
+    box.classList.add('show');
+  }
+  function toast(message) {
+    $('toast').textContent = message;
+    $('toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+  }
+  function renderClock() {
+    const now = new Date();
+    $('currentTime').textContent = new Intl.DateTimeFormat('ja-JP', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now);
+    $('currentDate').textContent = fmtDate(now);
+    renderMetrics();
+    renderExpiry();
+  }
+  function renderMetrics() {
+    const all = state.records;
+    const lastFeed = latestBy(all, ['BreastFeeding','Formula','ExpressedBreastMilk']);
+    const lastDiaper = latestBy(all, ['Pee','Poop']);
+    if (lastFeed) {
+      $('feedingElapsed').textContent = elapsedText(lastFeed.datetime);
+      $('feedingNote').textContent = '最後に記録された授乳・ミルクからの経過';
+      $('feedingAt').textContent = fmtTime(lastFeed.datetime);
+      const parts = [];
+      if (lastFeed.type === 'BreastFeeding') {
+        const mins = (Number(lastFeed.leftTime)||0) + (Number(lastFeed.rightTime)||0);
+        if (mins > 0) parts.push(`授乳時間 ${Math.round(mins/60)}分`);
+        if (amountOf(lastFeed) > 0) parts.push(`${amountOf(lastFeed)}ml 記録`);
+      } else if (amountOf(lastFeed) > 0) parts.push(`${amountOf(lastFeed)}ml`);
+      $('feedingType').textContent = [typeLabel(lastFeed.type), ...parts].join(' · ');
+    } else {
+      $('feedingElapsed').textContent = '記録なし';
+      $('feedingNote').textContent = '過去24時間のフィードに授乳記録がありません';
+      $('feedingAt').textContent = '--:--';
+      $('feedingType').textContent = '授乳記録待ち';
+    }
+    if (lastDiaper) {
+      $('diaperElapsed').textContent = elapsedText(lastDiaper.datetime);
+      $('diaperNote').textContent = `${typeLabel(lastDiaper.type)}の記録からの経過`;
+      $('diaperAt').textContent = fmtTime(lastDiaper.datetime);
+      $('diaperType').textContent = typeLabel(lastDiaper.type);
+    } else {
+      $('diaperElapsed').textContent = '記録なし';
+      $('diaperNote').textContent = '過去24時間のフィードに排泄記録がありません';
+      $('diaperAt').textContent = '--:--';
+      $('diaperType').textContent = 'おしっこ・うんち';
+    }
+    const today = all.filter(localDay);
+    const formula = today.filter(r => r.type === 'Formula').reduce((s,r)=>s+amountOf(r),0);
+    const breast = today.filter(r => r.type === 'BreastFeeding').reduce((s,r)=>s+amountOf(r),0);
+    const expressed = today.filter(r => r.type === 'ExpressedBreastMilk').reduce((s,r)=>s+amountOf(r),0);
+    const total = formula + breast + expressed;
+    const breastNoAmount = today.filter(r => r.type === 'BreastFeeding' && amountOf(r) === 0).length;
+    $('todayAmount').textContent = String(Math.round(total));
+    $('amountNote').textContent = `今日の記録済み摂取量 · ${today.filter(r => ['Formula','BreastFeeding','ExpressedBreastMilk'].includes(r.type)).length}回の授乳記録`;
+    $('amountBreakdown').innerHTML = '';
+    [ [`ミルク ${Math.round(formula)}ml`], [`母乳 ${Math.round(breast)}ml`], [`搾母乳 ${Math.round(expressed)}ml`] ].forEach(([label]) => {
+      const chip = document.createElement('span'); chip.className='chip'; chip.textContent=label; $('amountBreakdown').appendChild(chip);
+    });
+    $('amountFoot').textContent = breastNoAmount > 0
+      ? `母乳の量が未入力の授乳：${breastNoAmount}回（授乳時間からは推定していません）`
+      : '母乳量が未入力の記録は、量に含まれません。';
+    if (!state.url) {
+      $('feedingNote').textContent = '設定からデータフィードURLを登録してください';
+      $('amountNote').textContent = '接続後、今日の記録済み摂取量を表示します';
+      $('diaperNote').textContent = '設定からデータフィードURLを登録してください';
+    }
+  }
+  function renderExpiry() {
+    const created = parseDateKey(state.feedCreatedDate);
+    if (!state.url || !created) {
+      $('expiryText').textContent = '無料フィード：作成から90日で期限切れ';
+      return;
+    }
+    const expiry = new Date(created.getFullYear(), created.getMonth(), created.getDate() + 90, 23, 59, 59, 999);
+    const days = Math.ceil((expiry.getTime() - Date.now()) / 86400000);
+    if (days < 0) {
+      $('expiryText').textContent = 'フィード期限切れの可能性：設定からURLを再発行してください';
+      $('expiryText').style.color = 'var(--red)';
+    } else if (days <= 14) {
+      $('expiryText').textContent = `⚠ 無料フィード期限まで残り約${days}日`;
+      $('expiryText').style.color = 'var(--amber)';
+    } else {
+      $('expiryText').textContent = `無料フィード期限まで約${days}日`;
+      $('expiryText').style.color = 'var(--muted)';
+    }
+  }
+  function renderSyncText() {
+    const lastSuccess = state.lastSuccessAt ? fmtTime(state.lastSuccessAt) : '--:--';
+    const generated = state.generatedAt ? fmtTime(state.generatedAt) : '--:--';
+    $('lastSyncText').textContent = `最終取得：${lastSuccess}　／　ぴよログのデータ生成：${generated}`;
+  }
+  function render() {
+    renderMetrics(); renderExpiry(); renderSyncText();
+    if (!state.url) setStatus('', 'データフィード未設定');
+    else if (state.lastError) setStatus('error', '取得エラー · 前回のデータを表示中');
+    else if (state.lastSuccessAt) setStatus('ok', '接続中 · 自動更新');
+    else setStatus('', 'データを取得しています');
+  }
+  function loadSavedCache() {
+    const raw = getStore(STORE.cache, '');
+    if (!raw) return;
+    try {
+      const cached = JSON.parse(raw);
+      if (cached && Array.isArray(cached.records) && cached.schema_version === 1) {
+        state.records = sanitizeRecords(cached.records);
+        state.generatedAt = cached.generated_at || null;
+        state.lastSuccessAt = cached.dashboardSavedAt || null;
+        // Migrate older caches to the minimal record set; remove unrelated details and memos.
+        setStore(STORE.cache, JSON.stringify({ schema_version: 1, records: state.records, generated_at: state.generatedAt, dashboardSavedAt: state.lastSuccessAt }));
+      }
+    } catch (_) { /* ignore malformed local cache */ }
+  }
+  function storeCache(payload) {
+    const toStore = { schema_version:payload.schema_version, records:sanitizeRecords(payload.records), generated_at:payload.generated_at, dashboardSavedAt:new Date().toISOString() };
+    if (!setStore(STORE.cache, JSON.stringify(toStore))) toast('ブラウザ保存領域にアクセスできません。ページのURLや保存設定を確認してください。');
+  }
+  function scheduleFetch(delay) {
+    clearTimeout(nextFetchTimer);
+    if (!state.url) return;
+    nextFetchTimer = setTimeout(() => requestFeed(), Math.max(0, delay));
+  }
+  async function requestFeed() {
+    if (!state.url || state.inFlight) return;
+    const elapsed = Date.now() - (Number(getStore(STORE.lastRequest, '0')) || state.lastRequestAt || 0);
+    if (elapsed < MIN_REQUEST_GAP) {
+      scheduleFetch(MIN_REQUEST_GAP - elapsed + 500);
+      return;
+    }
+    state.inFlight = true;
+    state.lastRequestAt = Date.now();
+    setStore(STORE.lastRequest, String(state.lastRequestAt));
+    try {
+      const response = await fetch(state.url, { method:'GET', mode:'cors', cache:'no-store', headers:{'Accept':'application/json'}, referrerPolicy:'no-referrer' });
+      if (!response.ok) {
+        let code = '';
+        try { const body = await response.json(); code = body && body.error && body.error.code || ''; } catch (_) {}
+        if (response.status === 404 || code === 'feed_unavailable') {
+          throw new Error('feed_unavailable');
+        }
+        if (response.status === 429) throw new Error('rate_limit_exceeded');
+        throw new Error(`http_${response.status}`);
+      }
+      const payload = await response.json();
+      if (payload.schema_version !== 1 || !Array.isArray(payload.records)) throw new Error('unsupported_schema');
+      if (!payload.records.every(r => r && typeof r.datetime === 'string' && typeof r.type === 'string')) throw new Error('invalid_payload');
+      state.records = sanitizeRecords(payload.records);
+      state.generatedAt = payload.generated_at || null;
+      state.lastSuccessAt = new Date().toISOString();
+      state.lastError = '';
+      state.retryCount = 0;
+      storeCache(payload);
+      showError('');
+      render();
+    } catch (error) {
+      state.lastError = error && error.message || 'unknown';
+      state.retryCount += 1;
+      let message = '最新データを取得できません。通信状況を確認してください。前回成功したデータがあれば、その表示を残しています。';
+      if (state.lastError === 'feed_unavailable') message = 'フィードURLが無効、失効、または作成から90日経過の可能性があります。ぴよログで新しいデータフィードを作成し、［設定］でURLと作成日を更新してください。前回データは最新ではない可能性があります。';
+      else if (state.lastError === 'rate_limit_exceeded') message = 'ぴよログ側でアクセスが制限されました。自動再試行までお待ちください。更新ボタンを連打しないでください。';
+      else if (state.lastError === 'unsupported_schema' || state.lastError === 'invalid_payload') message = 'ぴよログから想定外のデータ形式が返りました。ダッシュボードの実装と公式データ仕様の互換性確認が必要です。';
+      else if (state.lastError.startsWith('http_')) message = `ぴよログからHTTP ${state.lastError.slice(5)} が返りました。時間を空けて自動再試行します。`;
+      showError(message);
+      render();
+    } finally {
+      state.inFlight = false;
+      const backoff = state.lastError ? Math.min(15*60*1000, 60000 * Math.pow(2, Math.min(state.retryCount,4))) : AUTO_REFRESH_MS;
+      scheduleFetch(Math.max(AUTO_REFRESH_MS, backoff));
+    }
+  }
+  function openSettings() {
+    $('feedUrlInput').value = '';
+    $('createdDateInput').value = state.feedCreatedDate || localDateKey(new Date());
+    $('settingsOverlay').hidden = false;
+    setTimeout(() => $('feedUrlInput').focus(), 60);
+  }
+  function closeSettings() { $('settingsOverlay').hidden = true; }
+  function validateFeedUrl(value) {
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' && url.hostname === 'feed.piyolog.com' && url.pathname.startsWith('/v1/feed/');
+    } catch (_) { return false; }
+  }
+  $('settingsButton').addEventListener('click', openSettings);
+  $('cancelSettings').addEventListener('click', closeSettings);
+  $('settingsOverlay').addEventListener('click', e => { if (e.target === $('settingsOverlay')) closeSettings(); });
+  $('settingsForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const inputUrl = $('feedUrlInput').value.trim();
+    const nextUrl = inputUrl || state.url;
+    if (!nextUrl) { toast('データフィードURLを入力してください'); return; }
+    if (!validateFeedUrl(nextUrl)) { toast('ぴよログのデータフィードURLを確認してください'); return; }
+    const created = $('createdDateInput').value;
+    if (!parseDateKey(created)) { toast('フィード作成日を入力してください'); return; }
+    const changed = nextUrl !== state.url;
+    state.url = nextUrl;
+    state.feedCreatedDate = created;
+    setStore(STORE.url, state.url);
+    setStore(STORE.createdDate, created);
+    state.lastError = '';
+    if (changed) {
+      state.lastRequestAt = 0;
+      setStore(STORE.lastRequest, '0');
+    }
+    closeSettings();
+    showError('');
+    render();
+    if (changed || !state.lastSuccessAt) requestFeed();
+    else scheduleFetch(0);
+    toast('設定を保存しました');
+  });
+  $('forgetButton').addEventListener('click', () => {
+    if (!confirm('接続URLと保存済みデータをこのブラウザから削除しますか？')) return;
+    state.url = ''; state.records = []; state.generatedAt = null; state.lastSuccessAt = null; state.lastError = '';
+    state.feedCreatedDate = localDateKey(new Date());
+    Object.values(STORE).forEach(removeStore);
+    clearTimeout(nextFetchTimer);
+    showError(''); closeSettings(); render(); toast('接続情報を削除しました');
+  });
+  $('refreshButton').addEventListener('click', () => {
+    if (!state.url) { openSettings(); return; }
+    const wait = MIN_REQUEST_GAP - (Date.now() - (Number(getStore(STORE.lastRequest, '0')) || 0));
+    if (wait > 0) { toast(`ぴよログへのアクセス間隔を守るため、あと${Math.ceil(wait/1000)}秒ほどで更新します`); scheduleFetch(wait + 500); }
+    else requestFeed();
+  });
+
+  async function acquireWakeLock() {
+    if (!state.keepAwakeWanted || document.visibilityState !== 'visible' || !('wakeLock' in navigator)) return false;
+    try {
+      if (state.wakeLock) return true;
+      state.wakeLock = await navigator.wakeLock.request('screen');
+      state.wakeLock.addEventListener('release', () => { state.wakeLock = null; updateWakeButton(); });
+      updateWakeButton();
+      return true;
+    } catch (_) { state.wakeLock = null; updateWakeButton(); return false; }
+  }
+  function updateWakeButton() {
+    $('wakeButton').textContent = state.keepAwakeWanted ? '▣ 画面ON維持：ON' : '▣ 画面ON維持';
+    $('wakeButton').style.borderColor = state.keepAwakeWanted ? 'var(--mint)' : '#3d5562';
+  }
+  $('wakeButton').addEventListener('click', async () => {
+    state.keepAwakeWanted = !state.keepAwakeWanted;
+    setStore(STORE.wake, state.keepAwakeWanted ? '1' : '0');
+    if (state.keepAwakeWanted) {
+      const ok = await acquireWakeLock();
+      if (ok) toast('画面ON維持を有効にしました');
+      else toast('この環境では維持できません。Androidの画面消灯設定も確認してください');
+    } else {
+      if (state.wakeLock) { try { await state.wakeLock.release(); } catch (_) {} state.wakeLock = null; }
+      toast('画面ON維持を解除しました');
+    }
+    updateWakeButton();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (state.keepAwakeWanted) acquireWakeLock();
+      const elapsed = Date.now() - (Number(getStore(STORE.lastRequest, '0')) || 0);
+      if (elapsed >= MIN_REQUEST_GAP) requestFeed();
+    }
+  });
+
+  // 初期化：保存済みキャッシュは表示しつつ、最小60秒間隔を守ってフィードを取得。
+  loadSavedCache();
+  renderClock();
+  render();
+  setInterval(renderClock, 1000);
+  updateWakeButton();
+  if (state.keepAwakeWanted) acquireWakeLock();
+  if (state.url) {
+    const elapsed = Date.now() - (Number(getStore(STORE.lastRequest, '0')) || 0);
+    if (elapsed >= MIN_REQUEST_GAP) requestFeed();
+    else scheduleFetch(MIN_REQUEST_GAP - elapsed + 500);
+  } else {
+    openSettings();
+  }
+})();
+</script>
+</body>
+</html>
